@@ -122,18 +122,32 @@ local DropRemote = Remotes:WaitForChild("RequestDropItem")
 -- 🔥 DROPS DE ESTA EJECUCIÓN
 getgenv().SESSION_DROPS = {}
 
--- 🔥 TOOL
-local function GetTool()
-    return Character:FindFirstChildOfClass("Tool") or Backpack:FindFirstChildOfClass("Tool")
+-- 🔥 BUSCAR TOOL POR NOMBRE, sin importar el slot
+local function GetToolByName(name)
+    name = normalize(name)
+    
+    -- Buscar en Character
+    for _, tool in pairs(Character:GetChildren()) do
+        if tool:IsA("Tool") and normalize(tool.Name) == name then
+            return tool
+        end
+    end
+    
+    -- Buscar en Backpack
+    for _, tool in pairs(Backpack:GetChildren()) do
+        if tool:IsA("Tool") and normalize(tool.Name) == name then
+            return tool
+        end
+    end
 end
 
-local function DropTool()
-    local Tool = GetTool()
-    if Tool then
-        local Handle = Tool:FindFirstChild("Handle")
+local function DropTool(tool)
+    tool = tool or GetToolByName(TARGET)
+    if tool then
+        local Handle = tool:FindFirstChild("Handle")
         if Handle then
-            table.insert(getgenv().SESSION_DROPS, Tool)
-            DropRemote:FireServer(Tool, Handle.Position)
+            table.insert(getgenv().SESSION_DROPS, tool)
+            DropRemote:FireServer(tool, Handle.Position)
         end
     end
 end
@@ -152,27 +166,31 @@ local function FindItem()
     end
 end
 
--- 🔥 LOOP FINITO
+-- 🔥 LOOP FINITO (CORREGIDO)
 while true do
     task.wait(0.1)
 
     local Item = FindItem()
-
     if not Item then
         print("✅ TERMINADO")
         break
     end
 
-    if GetTool() then
-        DropTool()
-        repeat task.wait() until not GetTool()
+    -- Tirar Tool que ya tengas del mismo tipo
+    local Tool = GetToolByName(TARGET)
+    if Tool then
+        DropTool(Tool)
+        repeat task.wait() until not GetToolByName(TARGET)
     end
 
+    -- Recoger la Tool encontrada
     PickupRemote:FireServer(Item)
-    repeat task.wait() until GetTool()
+    repeat task.wait() until GetToolByName(TARGET)
 
-    task.wait(0.2)
-
-    DropTool()
-    repeat task.wait() until not GetTool()
+    -- Tirarla inmediatamente
+    local ToolAfterPickup = GetToolByName(TARGET)
+    if ToolAfterPickup then
+        DropTool(ToolAfterPickup)
+        repeat task.wait() until not GetToolByName(TARGET)
+    end
 end
