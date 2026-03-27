@@ -109,6 +109,15 @@ end
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
+local StarterGui = game:GetService("StarterGui")
+
+local function SendNotif(title, text)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = 3
+    })
+end
 
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -166,13 +175,33 @@ local function FindItem()
     end
 end
 
+
+    -- 🔥 EXISTE ITEM?
+local function ExistsItem()
+    for _, Item in pairs(ItemsFolder:GetChildren()) do
+        if Item:IsA("Tool") then
+            local name = normalize(Item.Name)
+            if string.find(name, TARGET) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- 🔥 CHEQUEO INICIAL (SOLO UNA VEZ)
+if not ExistsItem() then
+    SendNotif("HACK", "NO SE ENCONTRO EL ITEM")
+    return
+end
 -- 🔥 LOOP FINITO (CORREGIDO)
 while true do
     task.wait(0.1)
 
+
     local Item = FindItem()
     if not Item then
-        print("✅ TERMINADO")
+        SendNotif("HACK", "TERMINADO")
         break
     end
 
